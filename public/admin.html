@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>hthienproxyvip — Admin</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding: 2rem; }
+      input[type="text"]{ width: 40%; padding: .4rem; }
+      button{ padding: .4rem .8rem; margin-left: .5rem; }
+      table{ width: 100%; border-collapse: collapse; margin-top: 1rem;}
+      th, td{ border: 1px solid #ddd; padding: .5rem; text-align: left;}
+    </style>
+  </head>
+  <body>
+    <h1>Admin — API Keys</h1>
+    <p>Note: This page is protected by HTTP Basic auth. Use username "admin" and your ADMIN_PASSWORD.</p>
+
+    <div>
+      <label>Key name (optional): <input id="name" type="text" /></label>
+      <button id="create">Create key</button>
+    </div>
+
+    <div id="created" style="margin-top:1rem;color:green"></div>
+
+    <h2>Existing keys</h2>
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Created</th><th>Revoked</th><th>Actions</th></tr></thead>
+      <tbody id="keys"></tbody>
+    </table>
+
+    <script>
+      async function fetchKeys(){
+        const r = await fetch('/admin/api-keys', { credentials: 'include' });
+        if (r.status === 401) {
+          document.getElementById('keys').innerHTML = '<tr><td colspan="5">Unauthorized — your browser should prompt for admin credentials.</td></tr>';
+          return;
+        }
+        const data = await r.json();
+        const tbody = document.getElementById('keys');
+        tbody.innerHTML = '';
+        data.forEach(k => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td>'+k.id+'</td><td>'+ (k.name||'') +'</td><td>'+k.created_at+'</td><td>'+k.revoked+'</td><td>' +
+            (k.revoked ? '' : '<button data-id="'+k.id+'" class="revoke">Revoke</button>') + '</td>';
+          tbody.appendChild(tr);
+        });
+        document.querySelectorAll('.revoke').forEach(b => {
+          b.addEventListener('click', async (e) => {
+            const id = b.getAttribute('data-id');
+            const r = await fetch('/admin/api-keys/'+id+'/revoke', { method: 'POST' });
+            if (r.ok) fetchKeys();
+            else alert('Failed to revoke');
+          });
+        });
+      }
+
+      document.getElementById('create').addEventListener('click', async () => {
+        const name = document.getElementById('name').value;
+        const r = await fetch('/admin/api-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        if (r.status === 401) {
+          alert('Unauthorized — make sure you answered the browser auth prompt.');
+          return;
+        }
+        if (!r.ok) {
+          alert('Failed to create key');
+          return;
+        }
+        const data = await r.json();
+        document.getElementById('created').textContent = 'Created key: ID=' + data.id + ' — Key (STORE THIS NOW): ' + data.key;
+        fetchKeys();
+      });
+
+      fetchKeys();
+    </script>
+  </body>
+</html>

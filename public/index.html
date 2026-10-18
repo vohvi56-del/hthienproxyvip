@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>hthienproxyvip — Proxy</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding: 2rem; }
+      input[type="text"]{ width: 80%; padding: .5rem; }
+      button{ padding: .5rem 1rem; }
+      iframe{ width: 100%; height: 70vh; border: 1px solid #ccc; margin-top: 1rem; }
+    </style>
+  </head>
+  <body>
+    <h1>hthienproxyvip — Proxy</h1>
+    <p>Enter a full URL to view through the proxy. Example: https://example.com/path</p>
+    <form id="f" onsubmit="return doProxy();">
+      <input id="u" type="text" placeholder="https://example.com/" required />
+      <button type="submit">Open via proxy</button>
+    </form>
+    <iframe id="frame" src=""></iframe>
+
+    <script>
+      function doProxy(){
+        const u = document.getElementById('u').value;
+        const iframe = document.getElementById('frame');
+        iframe.src = '/proxy?url=' + encodeURIComponent(u);
+        return false;
+      }
+    </script>
+  </body>
+</html>
